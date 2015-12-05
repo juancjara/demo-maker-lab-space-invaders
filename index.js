@@ -3,17 +3,27 @@ var Game = function(canvasId) {
   var screen = canvas.getContext('2d');
   this.size = {x: canvas.width, y: canvas.height};
 
-  this.bodies = createInvaders().concat(new Player(this));
+  this.bodies = createInvaders(this).concat(new Player(this));
+  this.shootSound = document.getElementById('shoot-sound');
+
   var self = this;
   var tick = function() {
     self.update();
     self.draw(screen);
     requestAnimationFrame(tick);
   };
+
   tick();
 };
 
 Game.prototype = {
+  invadersBellow: function(invader) {
+    return this.bodies.filter(function(b) {
+      return b instanceof Invader &&
+        Math.abs(invader.center.x - b.center.x) < b.size.x &&
+        b.center.y > invader.center.y;
+    }).length > 0;
+  },
 
   addBody: function(body) {
     this.bodies.push(body);
@@ -60,6 +70,8 @@ Player.prototype = {
                                y: this.center.y - this.size.y - 10},
                               {x: 0, y: -7});
       this.game.addBody(bullet);
+      this.game.shootSound.load();
+      this.game.shootSound.play();
     }
 
   },
@@ -89,7 +101,8 @@ Bullet.prototype = {
 
 };
 
-var Invader = function(center) {
+var Invader = function(game, center) {
+  this.game = game;
   this.size = {x: 15, y: 15};
   this.center = center;
   this.patrolX = 0;
@@ -101,6 +114,14 @@ Invader.prototype = {
   update: function() {
     if (this.patrolX < 0 || this.patrolX > 40) {
       this.speedX = -this.speedX;
+    }
+
+    if (Math.random() > 0.995 &&
+        !this.game.invadersBellow(this)) {
+      var bullet = new Bullet({x: this.center.x,
+                               y: this.center.y + this.size.y},
+                              {x: Math.random() - 0.5, y: 2});
+      this.game.addBody(bullet);
     }
 
     this.center.x += this.speedX;
@@ -131,12 +152,12 @@ var Keyboarder = function() {
   this.KEYS = {LEFT: 37, RIGHT: 39, SPACE: 32};
 };
 
-var createInvaders = function() {
+var createInvaders = function(game) {
   var invaders = [];
   for(var i = 0; i < 24; i++) {
     var x = 35 + (i % 8) * 30;
     var y = 35 + (i % 3) * 30;
-    invaders.push(new Invader({x: x, y: y}));
+    invaders.push(new Invader(game, {x: x, y: y}));
   }
   return invaders;
 };
