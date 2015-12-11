@@ -171,8 +171,8 @@ var colliding = function(b1, b2){
 };
 
 var drawRect = function(screen, body) {
-  screen.fillRect(body.center.x - body.size.x,
-                  body.center.y - body.size.y,
+  screen.fillRect(body.center.x - body.size.x / 2,
+                  body.center.y - body.size.y / 2,
                   body.size.x, body.size.y);
 };
 
